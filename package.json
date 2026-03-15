@@ -1,7 +1,13 @@
 {
   "name": "oracle-fusion-bip-vscode-extension",
-  "displayName": "oracle_fusion_bip_vscode_extension",
+  "displayName": "Oracle Fusion BIP",
+  "publisher": "Ranat",
   "description": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ranat11/oracleFusionBIPVSCodeExtension.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.110.0"
