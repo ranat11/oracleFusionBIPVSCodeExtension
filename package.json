@@ -1,0 +1,273 @@
+{
+  "name": "oracle-fusion-bip-vscode-extension",
+  "displayName": "oracle_fusion_bip_vscode_extension",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "oracleFusionBIPVSCodeExtension",
+          "title": "Fusion BIP",
+          "icon": "resources/fusion.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "oracleFusionBIPVSCodeExtensionPanel",
+          "title": "Fusion BIP",
+          "icon": "resources/fusion.svg"
+        }
+      ]
+    },
+    "views": {
+      "oracleFusionBIPVSCodeExtension": [
+        {
+          "id": "oracleFusionBIPVSCodeExtension.connectionsView",
+          "name": "Connections",
+          "icon": "resources/fusion.svg",
+          "type": "webview"
+        }
+      ],
+      "oracleFusionBIPVSCodeExtensionPanel": [
+        {
+          "id": "oracleFusionBIPVSCodeExtension.resultsPanel",
+          "name": "Results",
+          "icon": "resources/fusion.svg",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "oracleFusionBIPVSCodeExtension.configureConnection",
+        "title": "BIP: Configure Connection"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.createConnection",
+        "title": "BIP: Create Connection",
+        "icon": {
+          "light": "resources/add-connection.svg",
+          "dark": "resources/add-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.selectConnection",
+        "title": "BIP: Select Connection",
+        "icon": {
+          "light": "resources/switch-connection.svg",
+          "dark": "resources/switch-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.editConnection",
+        "title": "BIP: Edit Connection",
+        "icon": {
+          "light": "resources/edit-connection.svg",
+          "dark": "resources/edit-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.setActiveConnection",
+        "title": "BIP: Set Active Connection",
+        "icon": {
+          "light": "resources/switch-connection.svg",
+          "dark": "resources/switch-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.deleteConnection",
+        "title": "BIP: Delete Connection",
+        "icon": {
+          "light": "resources/delete-connection.svg",
+          "dark": "resources/delete-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.createParameter",
+        "title": "BIP: Create Parameter",
+        "icon": {
+          "light": "resources/add-connection.svg",
+          "dark": "resources/add-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.editParameter",
+        "title": "BIP: Edit Parameter",
+        "icon": {
+          "light": "resources/edit-connection.svg",
+          "dark": "resources/edit-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.deleteParameter",
+        "title": "BIP: Delete Parameter",
+        "icon": {
+          "light": "resources/delete-connection.svg",
+          "dark": "resources/delete-connection.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.installReport",
+        "title": "BIP: Install Report"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.stopQuery",
+        "title": "BIP: Stop Query",
+        "icon": {
+          "light": "resources/stop-query.svg",
+          "dark": "resources/stop-query.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.runQuery",
+        "title": "BIP: Run Query",
+        "icon": {
+          "light": "resources/play-query.svg",
+          "dark": "resources/play-query.svg"
+        }
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.exportCsv",
+        "title": "BIP: Export CSV"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.exportXlsx",
+        "title": "BIP: Export Excel"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.clearOutput",
+        "title": "BIP: Clear Output"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "oracleFusionBIPVSCodeExtension.runQuery",
+        "key": "shift+enter",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "oracleFusionBIPVSCodeExtension.runQuery",
+          "group": "navigation@100",
+          "when": "editorTextFocus && !oracleFusionBIPVSCodeExtension.queryRunning"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.stopQuery",
+          "group": "navigation@101",
+          "when": "editorTextFocus && oracleFusionBIPVSCodeExtension.queryRunning"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "oracleFusionBIPVSCodeExtension.runQuery",
+          "group": "navigation@10",
+          "when": "editorTextFocus && !oracleFusionBIPVSCodeExtension.queryRunning"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.stopQuery",
+          "group": "navigation@11",
+          "when": "editorTextFocus && oracleFusionBIPVSCodeExtension.queryRunning"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "oracleFusionBIPVSCodeExtension.configureConnection"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.createConnection"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.selectConnection"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.editConnection"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.deleteConnection"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.createParameter"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.editParameter"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.deleteParameter"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.installReport"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.stopQuery"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.runQuery"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.exportCsv"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.exportXlsx"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.clearOutput"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Oracle Fusion BIP",
+      "properties": {
+        "oracleFusionBIPVSCodeExtension.activeConnectionId": {
+          "type": "string",
+          "default": "",
+          "description": "Active Oracle Fusion BIP connection id."
+        },
+        "oracleFusionBIPVSCodeExtension.connections": {
+          "type": "array",
+          "default": [],
+          "description": "Saved Oracle Fusion BIP connections (passwords are stored securely)."
+        },
+        "oracleFusionBIPVSCodeExtension.parametersByConnection": {
+          "type": "object",
+          "default": {},
+          "description": "Saved SQL parameters keyed by connection id."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package:vsix": "npx @vscode/vsce package --no-dependencies --allow-missing-repository --skip-license",
+    "publish:vsce": "npx @vscode/vsce publish --no-dependencies --skip-license",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.110.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.5.5",
+    "jszip": "^3.10.1",
+    "xlsx": "^0.18.5"
+  }
+}
