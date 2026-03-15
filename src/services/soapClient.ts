@@ -96,6 +96,53 @@ function decodeXmlEntities(value: string): string {
 		.replace(/&amp;/g, '&');
 }
 
+
+function splitSqlIntoChunks(sql: string, maxBytesPerChunk: number = 32767, maxCharsPerChunk: number = 40000): string[] {
+	const chunks: string[] = [];
+	let remaining = sql;
+	const maxChunks = 10;
+
+	while (remaining.length > 0) {
+		if (chunks.length >= maxChunks) {
+			throw new Error('SQL exceeds maximum supported payload.');
+		}
+
+		if (Buffer.byteLength(remaining, 'utf8') <= maxBytesPerChunk && remaining.length <= maxCharsPerChunk) {
+			chunks.push(remaining);
+			remaining = '';
+			break;
+		}
+
+		let byteCount = 0;
+		let lastSpaceIndex = -1;
+		let forceSplitAt = remaining.length;
+
+		for (let i = 0; i < remaining.length; i++) {
+			const charBytes = Buffer.byteLength(remaining[i], 'utf8');
+			if (byteCount + charBytes > maxBytesPerChunk || i >= maxCharsPerChunk) {
+				forceSplitAt = i;
+				break;
+			}
+			byteCount += charBytes;
+			if (remaining[i] === ' ') {
+				lastSpaceIndex = i;
+			}
+		}
+
+		if (lastSpaceIndex > 0) {
+			chunks.push(remaining.slice(0, lastSpaceIndex));
+			remaining = remaining.slice(lastSpaceIndex + 1); // consume the space
+		} else {
+			throw new Error(
+				`SQL chunking failed: no space found within ${Math.min(maxBytesPerChunk, maxCharsPerChunk)} limit. ` +
+				'SQL must contain spaces so it can be split safely into p_sql...p_sql10 parameters.'
+			);
+		}
+	}
+
+	return chunks.length > 0 ? chunks : [''];
+}
+
 function normalizeRowValue(value: unknown): string {
 	if (value === null || value === undefined) {
 		return '';
@@ -514,7 +561,14 @@ export class BipClient {
 	}
 
 	private buildRunReportEnvelope(sql: string, reportPath: string): string {
-		return `<?xml version="1.0" encoding="UTF-8"?>\n<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:pub="http://xmlns.oracle.com/oxp/service/PublicReportService">\n  <soap:Body>\n    <pub:runReport>\n      <pub:reportRequest>\n        <pub:attributeFormat>xml</pub:attributeFormat>\n        <pub:byPassCache>true</pub:byPassCache>\n        <pub:reportAbsolutePath>${escapeXml(reportPath)}</pub:reportAbsolutePath>\n        <pub:sizeOfDataChunkDownload>-1</pub:sizeOfDataChunkDownload>\n        <pub:parameterNameValues>\n          <pub:item>\n            <pub:name>p_sql</pub:name>\n            <pub:values>\n              <pub:item><![CDATA[${sql}]]></pub:item>\n            </pub:values>\n          </pub:item>\n        </pub:parameterNameValues>\n      </pub:reportRequest>\n    </pub:runReport>\n  </soap:Body>\n</soap:Envelope>`;
+		const chunks = splitSqlIntoChunks(sql);
+		const paramItems = chunks
+			.map((chunk, i) => {
+				const name = i === 0 ? 'p_sql' : `p_sql${i + 1}`;
+				return `          <pub:item>\n            <pub:name>${name}</pub:name>\n            <pub:values>\n              <pub:item><![CDATA[${chunk}]]></pub:item>\n            </pub:values>\n          </pub:item>`;
+			})
+			.join('\n');
+		return `<?xml version="1.0" encoding="UTF-8"?>\n<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:pub="http://xmlns.oracle.com/oxp/service/PublicReportService">\n  <soap:Body>\n    <pub:runReport>\n      <pub:reportRequest>\n        <pub:attributeFormat>xml</pub:attributeFormat>\n        <pub:byPassCache>true</pub:byPassCache>\n        <pub:reportAbsolutePath>${escapeXml(reportPath)}</pub:reportAbsolutePath>\n        <pub:sizeOfDataChunkDownload>-1</pub:sizeOfDataChunkDownload>\n        <pub:parameterNameValues>\n${paramItems}\n        </pub:parameterNameValues>\n      </pub:reportRequest>\n    </pub:runReport>\n  </soap:Body>\n</soap:Envelope>`;
 	}
 
 	private buildDownloadObjectEnvelope(reportPath: string, userId: string, password: string): string {
