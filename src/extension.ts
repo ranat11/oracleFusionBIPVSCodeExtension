@@ -1,9 +1,14 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
 import * as path from 'path';
+import { createServer, ServerResponse } from 'node:http';
+import { randomUUID } from 'node:crypto';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
 import { toCsv, toXlsxBuffer } from './exporters';
 import { ActiveConnection, FIXED_CATALOG_ROOT, ParameterValueType, QueryPage, QueryResult, SavedParameter } from './models';
+import { registerBipQueryTool } from './mcp/registerTools';
 import { ConnectionManager } from './services/connectionManager';
 import { ReportInstaller } from './services/reportInstaller';
 import { BipClient } from './services/soapClient';
@@ -786,6 +791,127 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Fusion BIP output cleared.');
 	});
 
+	// ─── MCP Server Definition Provider ───────────────────────────────────────
+	// Host the MCP server inside the extension process so tool execution can use
+	// the same ConnectionManager + secret storage path as the main extension.
+	const mcpDidChange = new vscode.EventEmitter<void>();
+	const mcpAuthToken = randomUUID();
+	let mcpUri: vscode.Uri | undefined;
+	let mcpServerReady: Promise<vscode.Uri> | undefined;
+	let mcpHttpServer: ReturnType<typeof createServer> | undefined;
+
+	const writeJsonError = (res: ServerResponse, statusCode: number, message: string): void => {
+		res.statusCode = statusCode;
+		res.setHeader('content-type', 'application/json');
+		res.end(
+			JSON.stringify({
+				jsonrpc: '2.0',
+				error: {
+					code: statusCode === 405 ? -32000 : -32603,
+					message,
+				},
+				id: null,
+			})
+		);
+	};
+
+	const ensureMcpHttpServer = async (): Promise<vscode.Uri> => {
+		if (mcpUri) {
+			return mcpUri;
+		}
+		if (mcpServerReady) {
+			return mcpServerReady;
+		}
+
+		mcpServerReady = new Promise<vscode.Uri>((resolve, reject) => {
+			const httpServer = createServer(async (req, res) => {
+				if (req.url !== '/mcp') {
+					res.statusCode = 404;
+					res.end();
+					return;
+				}
+
+				const authHeader = req.headers['authorization'];
+				if (authHeader !== `Bearer ${mcpAuthToken}`) {
+					res.statusCode = 401;
+					res.end('Unauthorized');
+					return;
+				}
+
+				if (req.method !== 'POST') {
+					writeJsonError(res, 405, 'Method not allowed.');
+					return;
+				}
+
+				const transport = new StreamableHTTPServerTransport({
+					sessionIdGenerator: undefined,
+				});
+				const mcpServer = new McpServer({
+					name: 'oracle-fusion-bip',
+					version: '0.0.2',
+				});
+
+				registerBipQueryTool(mcpServer, async () => connectionManager.getActiveConnection());
+
+				try {
+					await mcpServer.connect(transport);
+					res.on('close', () => {
+						void transport.close();
+						void mcpServer.close();
+					});
+					await transport.handleRequest(req, res);
+				} catch (error) {
+					output.appendLine(`[MCP] ${error instanceof Error ? error.message : String(error)}`);
+					if (!res.headersSent) {
+						writeJsonError(res, 500, 'Internal server error');
+					}
+					void transport.close();
+					void mcpServer.close();
+				}
+			});
+
+			httpServer.once('error', (error) => {
+				mcpServerReady = undefined;
+				reject(error);
+			});
+
+			httpServer.listen(0, '127.0.0.1', () => {
+				const address = httpServer.address();
+				if (!address || typeof address === 'string') {
+					mcpServerReady = undefined;
+					reject(new Error('Unable to determine MCP server address.'));
+					return;
+				}
+
+				mcpHttpServer = httpServer;
+				mcpUri = vscode.Uri.parse(`http://127.0.0.1:${address.port}/mcp`);
+				resolve(mcpUri);
+			});
+		});
+
+		return mcpServerReady;
+	};
+
+	const mcpProvider: vscode.McpServerDefinitionProvider = {
+		onDidChangeMcpServerDefinitions: mcpDidChange.event,
+		async provideMcpServerDefinitions(): Promise<vscode.McpHttpServerDefinition[]> {
+			const uri = await ensureMcpHttpServer();
+			return [
+				new vscode.McpHttpServerDefinition(
+					'Oracle Fusion BIP',
+					uri,
+					{ Authorization: `Bearer ${mcpAuthToken}` },
+					'0.0.2'
+				),
+			];
+		},
+	};
+
+	const mcpRegistration = vscode.lm.registerMcpServerDefinitionProvider(
+		'oracleFusionBIPVSCodeExtension.mcp',
+		mcpProvider
+	);
+
 	context.subscriptions.push(
 		output,
 		connectionsView,
@@ -804,7 +930,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		runQuery,
 		exportCsv,
 		exportXlsx,
-		clearOutput
+		clearOutput,
+		mcpRegistration,
+		mcpDidChange,
+		new vscode.Disposable(() => {
+			mcpUri = undefined;
+			mcpServerReady = undefined;
+			if (mcpHttpServer) {
+				mcpHttpServer.close();
+				mcpHttpServer = undefined;
+			}
+		})
 	);
 }
 

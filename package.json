@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/ranat11/oracleFusionBIPVSCodeExtension.git"
   },
-  "version": "0.0.2",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.110.0"
   },
@@ -230,6 +230,12 @@
         }
       ]
     },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "oracleFusionBIPVSCodeExtension.mcp",
+        "label": "Oracle Fusion BIP"
+      }
+    ],
     "configuration": {
       "title": "Oracle Fusion BIP",
       "properties": {
@@ -272,8 +278,10 @@
     "typescript-eslint": "^8.56.1"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "fast-xml-parser": "^5.5.5",
     "jszip": "^3.10.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
   }
 }
