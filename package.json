@@ -157,7 +157,7 @@
       {
         "command": "oracleFusionBIPVSCodeExtension.runQuery",
         "key": "shift+enter",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && editorLangId =~ /sql$/"
       }
     ],
     "menus": {
@@ -165,24 +165,24 @@
         {
           "command": "oracleFusionBIPVSCodeExtension.runQuery",
           "group": "navigation@100",
-          "when": "editorTextFocus && !oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId =~ /sql$/ && !oracleFusionBIPVSCodeExtension.queryRunning"
         },
         {
           "command": "oracleFusionBIPVSCodeExtension.stopQuery",
           "group": "navigation@101",
-          "when": "editorTextFocus && oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId =~ /sql$/ && oracleFusionBIPVSCodeExtension.queryRunning"
         }
       ],
       "editor/context": [
         {
           "command": "oracleFusionBIPVSCodeExtension.runQuery",
           "group": "navigation@10",
-          "when": "editorTextFocus && !oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId =~ /sql$/ && !oracleFusionBIPVSCodeExtension.queryRunning"
         },
         {
           "command": "oracleFusionBIPVSCodeExtension.stopQuery",
           "group": "navigation@11",
-          "when": "editorTextFocus && oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId =~ /sql$/ && oracleFusionBIPVSCodeExtension.queryRunning"
         }
       ],
       "commandPalette": [
