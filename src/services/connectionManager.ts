@@ -180,7 +180,7 @@ export class ConnectionManager {
 
 	public getConnectionParameters(connectionId: string): SavedParameter[] {
 		const parametersByConnection = this.getStoredParametersByConnection();
-		return (parametersByConnection[connectionId] ?? []).slice().sort((left, right) => left.name.localeCompare(right.name));
+		return (parametersByConnection[connectionId] ?? []).slice();
 	}
 
 	public async upsertConnectionParameter(connectionId: string, parameter: { name: string; value: string; type: ParameterValueType }): Promise<SavedParameter> {
@@ -224,6 +224,24 @@ export class ConnectionManager {
 		}
 
 		parametersByConnection[connectionId] = remaining;
+		await this.persistStoredParametersByConnection(parametersByConnection);
+	}
+
+	public async reorderConnectionParameters(connectionId: string, orderedNames: string[]): Promise<void> {
+		const parametersByConnection = this.getStoredParametersByConnection();
+		const existing = parametersByConnection[connectionId] ?? [];
+		const byName = new Map(existing.map((p) => [p.name.toUpperCase(), p]));
+		const reordered = orderedNames
+			.map((name) => byName.get(name.toUpperCase()))
+			.filter((p): p is SavedParameter => p !== undefined);
+		// Append any parameters not present in orderedNames to the end
+		const reorderedKeys = new Set(reordered.map((p) => p.name.toUpperCase()));
+		for (const p of existing) {
+			if (!reorderedKeys.has(p.name.toUpperCase())) {
+				reordered.push(p);
+			}
+		}
+		parametersByConnection[connectionId] = reordered;
 		await this.persistStoredParametersByConnection(parametersByConnection);
 	}
 

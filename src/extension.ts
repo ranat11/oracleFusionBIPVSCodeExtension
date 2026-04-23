@@ -142,6 +142,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.setStatusBarMessage(`Deleted parameter :${name}`, 2500);
 	};
 
+	const handleReorderParameters = async (orderedNames: string[]): Promise<void> => {
+		const activeConnectionId = connectionManager.getActiveConnectionId();
+		if (!activeConnectionId) {
+			return;
+		}
+		await connectionManager.reorderConnectionParameters(activeConnectionId, orderedNames);
+	};
+
 	const connectionsViewProvider = new ConnectionsViewProvider(context.extensionUri, connectionManager, {
 		onCreateConnection: handleCreateConnection,
 		onSelectConnection: handleSetActiveConnection,
@@ -149,7 +157,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		onDeleteConnection: handleDeleteConnection,
 		onCreateParameter: handleCreateParameter,
 		onSaveParameter: handleSaveParameter,
-		onDeleteParameter: handleDeleteParameter
+		onDeleteParameter: handleDeleteParameter,
+		onReorderParameters: handleReorderParameters
 	});
 	const connectionsView = vscode.window.registerWebviewViewProvider(ConnectionsViewProvider.viewType, connectionsViewProvider, {
 		webviewOptions: { retainContextWhenHidden: true }

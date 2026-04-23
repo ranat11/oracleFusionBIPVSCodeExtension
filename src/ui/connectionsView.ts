@@ -10,6 +10,7 @@ interface ConnectionsViewMessage {
 	originalName?: string;
 	value?: string;
 	parameterType?: ParameterValueType;
+	orderedNames?: string[];
 }
 
 interface ConnectionsViewActions {
@@ -20,6 +21,7 @@ interface ConnectionsViewActions {
 	onCreateParameter: () => Promise<void>;
 	onSaveParameter: (payload: { originalName?: string; name: string; value: string; type: ParameterValueType }) => Promise<SavedParameter>;
 	onDeleteParameter: (name: string) => Promise<void>;
+	onReorderParameters: (orderedNames: string[]) => Promise<void>;
 }
 
 export class ConnectionsViewProvider implements vscode.WebviewViewProvider {
@@ -104,6 +106,11 @@ export class ConnectionsViewProvider implements vscode.WebviewViewProvider {
 				if (message.name) {
 					await this.actions.onDeleteParameter(message.name);
 					this.render();
+				}
+				break;
+			case 'reorderParameters':
+				if (message.orderedNames) {
+					await this.actions.onReorderParameters(message.orderedNames);
 				}
 				break;
 			default:
@@ -355,6 +362,21 @@ input, select {
 	font-size: 11px;
 	color: var(--muted);
 }
+.drag-handle {
+	width: 20px;
+	padding: 0 4px;
+	cursor: grab;
+	color: var(--muted);
+	user-select: none;
+	text-align: center;
+}
+.drag-handle:active {
+	cursor: grabbing;
+}
+tr.drag-over {
+	outline: 2px solid var(--active-border);
+	outline-offset: -2px;
+}
 </style>
 </head>
 <body>
@@ -383,7 +405,8 @@ input, select {
 	</details>
 
 	<template id="draft-row-template">
-		<tr data-original-name="">
+		<tr data-original-name="" draggable="true">
+			<td class="drag-handle" title="Drag to reorder">⠿</td>
 			<td><input data-field="name" type="text" placeholder="P_PARAMETER" /></td>
 			<td class="type-cell"><span data-type-label>Auto detect</span></td>
 			<td><input data-field="value" type="text" placeholder="Parameter value" /></td>
@@ -410,6 +433,10 @@ input, select {
 		}
 		const fragment = draftTemplate.content.cloneNode(true);
 		parameterBody.prepend(fragment);
+		const newRow = parameterBody.querySelector('tr');
+		if (newRow) {
+			attachRowDragHandlers(newRow);
+		}
 		const firstInput = parameterBody.querySelector('tr input[data-field="name"]');
 		if (firstInput) {
 			firstInput.focus();
@@ -511,6 +538,66 @@ input, select {
 		scheduleAutoSave(row, true);
 	});
 
+	let dragSrcRow = null;
+
+	function attachRowDragHandlers(row) {
+		row.addEventListener('dragstart', (event) => {
+			dragSrcRow = row;
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', '');
+			setTimeout(() => row.classList.add('dragging'), 0);
+		});
+		row.addEventListener('dragend', () => {
+			row.classList.remove('dragging');
+			if (parameterBody) {
+				for (const r of parameterBody.querySelectorAll('tr')) {
+					r.classList.remove('drag-over');
+				}
+			}
+		});
+		row.addEventListener('dragover', (event) => {
+			if (!dragSrcRow || dragSrcRow === row) {
+				return;
+			}
+			event.preventDefault();
+			event.dataTransfer.dropEffect = 'move';
+			if (parameterBody) {
+				for (const r of parameterBody.querySelectorAll('tr')) {
+					r.classList.remove('drag-over');
+				}
+			}
+			row.classList.add('drag-over');
+		});
+		row.addEventListener('drop', (event) => {
+			if (!dragSrcRow || dragSrcRow === row || !parameterBody) {
+				return;
+			}
+			event.preventDefault();
+			row.classList.remove('drag-over');
+			const rows = [...parameterBody.querySelectorAll('tr')];
+			const srcIndex = rows.indexOf(dragSrcRow);
+			const targetIndex = rows.indexOf(row);
+			if (srcIndex === -1 || targetIndex === -1) {
+				return;
+			}
+			if (srcIndex < targetIndex) {
+				row.after(dragSrcRow);
+			} else {
+				row.before(dragSrcRow);
+			}
+			const orderedNames = [...parameterBody.querySelectorAll('tr')]
+				.map((r) => getRowPayload(r).originalName || getRowPayload(r).name)
+				.filter(Boolean);
+			post({ type: 'reorderParameters', orderedNames });
+		});
+	}
+
+	if (parameterBody) {
+		for (const row of parameterBody.querySelectorAll('tr[draggable]')) {
+			attachRowDragHandlers(row);
+		}
+	}
+
 	window.addEventListener('message', (event) => {
 		const message = event.data;
 		if (!parameterBody) {
@@ -561,13 +648,14 @@ input, select {
 
 	private renderParameterTable(parameters: SavedParameter[]): string {
 		const rows = parameters.length === 0
-			? '<tr><td colspan="4" class="empty">No parameters for active connection</td></tr>'
+			? '<tr><td colspan="5" class="empty">No parameters for active connection</td></tr>'
 			: parameters.map((parameter) => this.renderParameterRow(parameter)).join('');
 
 		return `<div class="table-wrap">
 			<table>
 				<thead>
 					<tr>
+						<th class="drag-handle"></th>
 						<th>Name</th>
 						<th>Type</th>
 						<th>Value</th>
@@ -580,7 +668,8 @@ input, select {
 	}
 
 	private renderParameterRow(parameter: SavedParameter): string {
-		return `<tr data-original-name="${escapeHtml(parameter.name)}">
+		return `<tr data-original-name="${escapeHtml(parameter.name)}" draggable="true">
+			<td class="drag-handle" title="Drag to reorder">⠿</td>
 			<td><input data-field="name" type="text" value="${escapeHtml(parameter.name)}" /></td>
 			<td class="type-cell">
 				<select data-field="type">
