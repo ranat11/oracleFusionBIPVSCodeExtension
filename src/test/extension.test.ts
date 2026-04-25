@@ -28,7 +28,9 @@ suite('Extension Test Suite', () => {
 			'oracleFusionBIPVSCodeExtension.runQuery',
 			'oracleFusionBIPVSCodeExtension.exportCsv',
 			'oracleFusionBIPVSCodeExtension.exportXlsx',
-			'oracleFusionBIPVSCodeExtension.clearOutput'
+			'oracleFusionBIPVSCodeExtension.clearOutput',
+			'oracleFusionBIPVSCodeExtension.toggleSqlFormatter',
+			'oracleFusionBIPVSCodeExtension.insertSqlHeaderTemplate'
 		];
 
 		for (const command of expected) {

@@ -42,3 +42,30 @@ Run Oracle Fusion BI Publisher SQL directly from VS Code with a workflow built f
 3. Open SQL in the editor.
 4. Run the query.
 5. Review results and export when needed.
+
+---
+
+## SQL Formatter
+
+- **Automatic Formatting:** SQL and PLSQL documents are automatically formatted on save (configurable).
+- **Manual Formatting:** Use the command palette or right-click to format SQL manually.
+- **Configurable Options:**
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.enabled`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.formatOnSave`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.keywordCase`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.identifierCase`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.indentSize`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.alignAliases`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.clauseBreaks`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.commaPlacement`
+	- `oracleFusionBIPVSCodeExtension.sqlFormatter.compactParenthesesWordLimit`
+- **Header Template:** Insert a customizable SQL header template with the command: `Insert SQL Header Template`.
+- **Toggle:** Enable/disable the formatter with the command: `Toggle SQL Formatter`.
+
+## Model Context Protocol (MCP) Tool
+
+- **MCP Server:** The extension hosts an MCP server for tool execution and integration.
+- **BIP Query Tool:** Exposes a tool named `bip_run_query` for executing SQL against Oracle Fusion BI Publisher and returning results as JSON.
+- **Usage:** The MCP tool is used internally and can be integrated with other MCP-compatible clients or workflows.
+- **Security:** Authenticated via a random token; only POST requests to `/mcp` are accepted.
+- **Limitation:** Do not add row-limiting clauses (e.g., `FETCH FIRST`, `ROWNUM`)—the server limits results automatically.

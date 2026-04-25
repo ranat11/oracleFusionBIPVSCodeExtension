@@ -15,16 +15,74 @@ import { BipClient } from './services/soapClient';
 import { ConnectionsViewProvider } from './ui/connectionsView';
 import { ResultsPanel } from './ui/resultsPanel';
 import { extractSqlParameters, resolveSqlParameters } from './utils/sqlParameters';
+import { buildSqlHeaderTemplate, formatSqlDocument, SqlFormatterConfig } from './utils/sqlFormatter';
 import { getRunnableSql } from './utils/sqlText';
 
 const BUNDLED_REPORT_ZIP_PATH = ['fusion_report', 'VS Code Extension.zip'];
 const BUNDLED_OBJECT_TYPE = 'xdrz';
 const DEFAULT_PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 500;
+const SQL_LANGUAGE_IDS = new Set(['sql', 'plsql']);
+const SQL_FILE_NAME_REGEX = /\.(sql|pls|plsql|pks|pkb|prc|fnc|trg)$/iu;
+
+function getSqlFormatterConfig(): SqlFormatterConfig {
+	const config = vscode.workspace.getConfiguration('oracleFusionBIPVSCodeExtension.sqlFormatter');
+	const keywordCase = config.get<'upper' | 'lower' | 'preserve'>('keywordCase', 'upper');
+	const identifierCase = config.get<'upper' | 'lower' | 'preserve'>('identifierCase', 'preserve');
+	const commaPlacement = config.get<'trailing' | 'leading'>('commaPlacement', 'trailing');
+
+	return {
+		enabled: config.get<boolean>('enabled', true),
+		keywordCase,
+		identifierCase,
+		indentSize: Math.max(1, config.get<number>('indentSize', 2)),
+		alignAliases: config.get<boolean>('alignAliases', true),
+		clauseBreaks: config.get<boolean>('clauseBreaks', true),
+		commaPlacement,
+		compactParenthesesWordLimit: Math.max(0, config.get<number>('compactParenthesesWordLimit', 5)),
+	};
+}
 
 function createDefaultExportUri(extension: 'csv' | 'xlsx'): vscode.Uri {
 	const downloadsPath = path.join(os.homedir(), 'Downloads');
 	return vscode.Uri.file(path.join(downloadsPath, `bip-results-${Date.now()}.${extension}`));
+}
+
+function isSqlDocument(document: vscode.TextDocument): boolean {
+	const languageId = document.languageId.toLowerCase();
+	if (SQL_LANGUAGE_IDS.has(languageId) || languageId.includes('sql')) {
+		return true;
+	}
+
+	return SQL_FILE_NAME_REGEX.test(document.fileName);
+}
+
+function resolveSqlFormatterLanguage(document: vscode.TextDocument): 'sql' | 'plsql' {
+	const languageId = document.languageId.toLowerCase();
+	if (languageId === 'plsql' || languageId.includes('oracle')) {
+		return 'plsql';
+	}
+	return 'sql';
+}
+
+function getSqlFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+	if (!isSqlDocument(document)) {
+		return [];
+	}
+
+	const config = getSqlFormatterConfig();
+	if (!config.enabled) {
+		return [];
+	}
+
+	const source = document.getText();
+	const formatted = formatSqlDocument(source, config, resolveSqlFormatterLanguage(document));
+	if (formatted === source) {
+		return [];
+	}
+
+	const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(source.length));
+	return [vscode.TextEdit.replace(fullRange, formatted)];
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -791,6 +849,62 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Fusion BIP output cleared.');
 	});
 
+	const sqlFormattingProvider = vscode.languages.registerDocumentFormattingEditProvider(
+		[{ language: 'sql' }, { language: 'plsql' }],
+		{
+			provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+				return getSqlFormattingEdits(document);
+			}
+		}
+	);
+
+	const sqlFormatOnSave = vscode.workspace.onWillSaveTextDocument((event) => {
+		const formatOnSaveEnabled = vscode.workspace
+			.getConfiguration('oracleFusionBIPVSCodeExtension.sqlFormatter')
+			.get<boolean>('formatOnSave', false);
+		if (!formatOnSaveEnabled) {
+			return;
+		}
+
+		if (event.reason !== vscode.TextDocumentSaveReason.Manual) {
+			return;
+		}
+
+		event.waitUntil(Promise.resolve(getSqlFormattingEdits(event.document)));
+	});
+
+	const toggleSqlFormatter = vscode.commands.registerCommand('oracleFusionBIPVSCodeExtension.toggleSqlFormatter', async () => {
+		const config = vscode.workspace.getConfiguration('oracleFusionBIPVSCodeExtension.sqlFormatter');
+		const currentlyEnabled = config.get<boolean>('enabled', true);
+		const nextValue = !currentlyEnabled;
+		await config.update('enabled', nextValue, vscode.ConfigurationTarget.Global);
+		vscode.window.showInformationMessage(`SQL formatter ${nextValue ? 'enabled' : 'disabled'}.`);
+	});
+
+	const insertSqlHeaderTemplate = vscode.commands.registerCommand('oracleFusionBIPVSCodeExtension.insertSqlHeaderTemplate', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			vscode.window.showWarningMessage('Open a SQL editor before inserting a header template.');
+			return;
+		}
+
+		if (!isSqlDocument(editor.document)) {
+			vscode.window.showWarningMessage('Header template is available only for SQL documents.');
+			return;
+		}
+
+		const templateConfig = vscode.workspace.getConfiguration('oracleFusionBIPVSCodeExtension.sqlFormatter');
+		const configuredTemplate = templateConfig.get<string>('headerTemplate', '').trim();
+		const headerAuthorName = templateConfig.get<string>('headerAuthorName', 'Ranatchai');
+		const template = configuredTemplate.length > 0
+			? `${configuredTemplate}\n\n`
+			: buildSqlHeaderTemplate(path.basename(editor.document.fileName), headerAuthorName);
+
+		await editor.edit((editBuilder) => {
+			editBuilder.insert(new vscode.Position(0, 0), template);
+		});
+	});
+
 	// ─── MCP Server Definition Provider ───────────────────────────────────────
 	// Host the MCP server inside the extension process so tool execution can use
 	// the same ConnectionManager + secret storage path as the main extension.
@@ -931,6 +1045,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		exportCsv,
 		exportXlsx,
 		clearOutput,
+		sqlFormattingProvider,
+		sqlFormatOnSave,
+		toggleSqlFormatter,
+		insertSqlHeaderTemplate,
 		mcpRegistration,
 		mcpDidChange,
 		new vscode.Disposable(() => {

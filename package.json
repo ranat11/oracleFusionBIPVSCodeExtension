@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/ranat11/oracleFusionBIPVSCodeExtension.git"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.110.0"
   },
@@ -151,12 +151,25 @@
       {
         "command": "oracleFusionBIPVSCodeExtension.clearOutput",
         "title": "BIP: Clear Output"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.toggleSqlFormatter",
+        "title": "BIP: Toggle SQL Formatter"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.insertSqlHeaderTemplate",
+        "title": "BIP: Insert SQL Header Template"
       }
     ],
     "keybindings": [
       {
         "command": "oracleFusionBIPVSCodeExtension.runQuery",
         "key": "shift+enter",
+        "when": "editorTextFocus && editorLangId =~ /sql$/"
+      },
+      {
+        "command": "oracleFusionBIPVSCodeExtension.insertSqlHeaderTemplate",
+        "key": "cmd+alt+h",
         "when": "editorTextFocus && editorLangId =~ /sql$/"
       }
     ],
@@ -227,6 +240,12 @@
         },
         {
           "command": "oracleFusionBIPVSCodeExtension.clearOutput"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.toggleSqlFormatter"
+        },
+        {
+          "command": "oracleFusionBIPVSCodeExtension.insertSqlHeaderTemplate"
         }
       ]
     },
@@ -253,6 +272,66 @@
           "type": "object",
           "default": {},
           "description": "Saved SQL parameters keyed by connection id."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable SQL formatting from this extension."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.formatOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically format SQL documents when they are saved."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.keywordCase": {
+          "type": "string",
+          "enum": ["upper", "lower", "preserve"],
+          "default": "upper",
+          "description": "Keyword casing style for formatted SQL."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.identifierCase": {
+          "type": "string",
+          "enum": ["upper", "lower", "preserve"],
+          "default": "lower",
+          "description": "Identifier casing style for table names, column names, aliases, and CTE names."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.indentSize": {
+          "type": "number",
+          "minimum": 1,
+          "default": 2,
+          "description": "Indent size used by the SQL formatter."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.alignAliases": {
+          "type": "boolean",
+          "default": true,
+          "description": "Align SELECT aliases around AS when possible."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.clauseBreaks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Put major clauses (FROM, WHERE, GROUP BY, ORDER BY, ...) on separate lines."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.commaPlacement": {
+          "type": "string",
+          "enum": ["trailing", "leading"],
+          "default": "trailing",
+          "description": "Comma placement style for formatted SQL."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.compactParenthesesWordLimit": {
+          "type": "number",
+          "minimum": 0,
+          "default": 12,
+          "description": "Keep parenthesized content on one line when word count is at or below this value."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.headerTemplate": {
+          "type": "string",
+          "default": "",
+          "description": "Optional custom header template inserted by the SQL header command."
+        },
+        "oracleFusionBIPVSCodeExtension.sqlFormatter.headerAuthorName": {
+          "type": "string",
+          "default": "Unknown Author",
+          "description": "Author name used by the default SQL header template."
         }
       }
     }
@@ -281,6 +360,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "fast-xml-parser": "^5.5.5",
     "jszip": "^3.10.1",
+    "sql-formatter": "^15.6.10",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   }
