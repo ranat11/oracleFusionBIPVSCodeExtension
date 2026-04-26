@@ -17,6 +17,8 @@ import { ResultsPanel } from './ui/resultsPanel';
 import { extractSqlParameters, resolveSqlParameters } from './utils/sqlParameters';
 import { buildSqlHeaderTemplate, formatSqlDocument, SqlFormatterConfig } from './utils/sqlFormatter';
 import { getRunnableSql } from './utils/sqlText';
+import { SqlCompletionProvider } from './providers/sqlCompletionProvider';
+
 
 const BUNDLED_REPORT_ZIP_PATH = ['fusion_report', 'VS Code Extension.zip'];
 const BUNDLED_OBJECT_TYPE = 'xdrz';
@@ -95,6 +97,41 @@ export async function activate(context: vscode.ExtensionContext) {
 	let currentPageSize = DEFAULT_PAGE_SIZE;
 	let currentPage: QueryPage | undefined;
 	await vscode.commands.executeCommand('setContext', 'oracleFusionBIPVSCodeExtension.queryRunning', false);
+
+	const sqlCompletionProvider = new SqlCompletionProvider(context);
+	context.subscriptions.push(
+		vscode.languages.registerCompletionItemProvider(
+			[
+				{ language: 'sql', scheme: 'file' },
+				{ language: 'plsql', scheme: 'file' },
+				{ language: 'sql', scheme: 'untitled' },
+				{ language: 'plsql', scheme: 'untitled' }
+			],
+			sqlCompletionProvider,
+			'.', ' '
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.languages.registerHoverProvider(
+			[
+				{ language: 'sql', scheme: 'file' },
+				{ language: 'plsql', scheme: 'file' },
+				{ language: 'sql', scheme: 'untitled' },
+				{ language: 'plsql', scheme: 'untitled' }
+			],
+			sqlCompletionProvider
+		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('oracleFusionBIPVSCodeExtension.trackUsage', (type: 'table' | 'column', name: string) => {
+			const stats = context.globalState.get<Record<string, number>>('oracleFusionBIPVSCodeExtension.sqlUsageStats', {});
+			const key = `${type}:${name}`;
+			stats[key] = (stats[key] || 0) + 1;
+			context.globalState.update('oracleFusionBIPVSCodeExtension.sqlUsageStats', stats);
+		})
+	);
 
 	const setQueryRunningContext = async (running: boolean): Promise<void> => {
 		await vscode.commands.executeCommand('setContext', 'oracleFusionBIPVSCodeExtension.queryRunning', running);
