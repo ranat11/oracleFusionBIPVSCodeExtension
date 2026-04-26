@@ -141,7 +141,7 @@ function compactShortParentheses(sql: string, wordLimit: number): string {
 		return sql;
 	}
 
-	const multilineParenthesesRegex = /\(\s*\n([\s\S]*?)\n\s*\)/gu;
+	const multilineParenthesesRegex = /\([\s\t]*\n?([\s\S]*?)\n?[\s\t]*\)/gu;
 	let previous = sql;
 
 	while (true) {

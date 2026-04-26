@@ -16,7 +16,30 @@
     "Other"
   ],
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:oracle-fusion-sql"
+  ],
   "contributes": {
+    "languages": [
+      {
+        "id": "oracle-fusion-sql",
+        "aliases": [
+          "Oracle Fusion SQL",
+          "oracle-fusion-sql"
+        ],
+        "extensions": [
+          ".fusion.sql"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "oracle-fusion-sql",
+        "scopeName": "source.oracle-fusion-sql",
+        "path": "./syntaxes/oracle-fusion-sql.tmLanguage.json"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -165,12 +188,12 @@
       {
         "command": "oracleFusionBIPVSCodeExtension.runQuery",
         "key": "shift+enter",
-        "when": "editorTextFocus && editorLangId =~ /sql$/"
+        "when": "editorTextFocus && editorLangId == 'oracle-fusion-sql'"
       },
       {
         "command": "oracleFusionBIPVSCodeExtension.insertSqlHeaderTemplate",
         "key": "cmd+alt+h",
-        "when": "editorTextFocus && editorLangId =~ /sql$/"
+        "when": "editorTextFocus && editorLangId == 'oracle-fusion-sql'"
       }
     ],
     "menus": {
@@ -178,24 +201,24 @@
         {
           "command": "oracleFusionBIPVSCodeExtension.runQuery",
           "group": "navigation@100",
-          "when": "editorTextFocus && editorLangId =~ /sql$/ && !oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId == 'oracle-fusion-sql' && !oracleFusionBIPVSCodeExtension.queryRunning"
         },
         {
           "command": "oracleFusionBIPVSCodeExtension.stopQuery",
           "group": "navigation@101",
-          "when": "editorTextFocus && editorLangId =~ /sql$/ && oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId == 'oracle-fusion-sql' && oracleFusionBIPVSCodeExtension.queryRunning"
         }
       ],
       "editor/context": [
         {
           "command": "oracleFusionBIPVSCodeExtension.runQuery",
           "group": "navigation@10",
-          "when": "editorTextFocus && editorLangId =~ /sql$/ && !oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId == 'oracle-fusion-sql' && !oracleFusionBIPVSCodeExtension.queryRunning"
         },
         {
           "command": "oracleFusionBIPVSCodeExtension.stopQuery",
           "group": "navigation@11",
-          "when": "editorTextFocus && editorLangId =~ /sql$/ && oracleFusionBIPVSCodeExtension.queryRunning"
+          "when": "editorTextFocus && editorLangId == 'oracle-fusion-sql' && oracleFusionBIPVSCodeExtension.queryRunning"
         }
       ],
       "commandPalette": [

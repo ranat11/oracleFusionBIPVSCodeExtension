@@ -1,0 +1,29 @@
+{
+	"comments": {
+		"lineComment": "--",
+		"blockComment": ["/*", "*/"]
+	},
+	"brackets": [
+		["(", ")"],
+		["[", "]"],
+		["{", "}"]
+	],
+	"autoClosingPairs": [
+		{ "open": "(", "close": ")" },
+		{ "open": "[", "close": "]" },
+		{ "open": "{", "close": "}" },
+		{ "open": "'", "close": "'", "notIn": ["string", "comment"] },
+		{ "open": "\"", "close": "\"", "notIn": ["string"] }
+	],
+	"surroundingPairs": [
+		["(", ")"],
+		["[", "]"],
+		["{", "}"],
+		["'", "'"],
+		["\"", "\""]
+	],
+	"indentationRules": {
+		"increaseIndentPattern": "^\\s*(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|INSERT INTO|UPDATE|DELETE|WITH|START WITH|CONNECT BY)\\b",
+		"decreaseIndentPattern": "^\\s*(FROM|WHERE|GROUP BY|ORDER BY|HAVING|INSERT INTO|UPDATE|DELETE|WITH|START WITH|CONNECT BY)\\b"
+	}
+}

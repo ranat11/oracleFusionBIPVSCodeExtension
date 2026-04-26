@@ -24,8 +24,8 @@ const BUNDLED_REPORT_ZIP_PATH = ['fusion_report', 'VS Code Extension.zip'];
 const BUNDLED_OBJECT_TYPE = 'xdrz';
 const DEFAULT_PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 500;
-const SQL_LANGUAGE_IDS = new Set(['sql', 'plsql']);
-const SQL_FILE_NAME_REGEX = /\.(sql|pls|plsql|pks|pkb|prc|fnc|trg)$/iu;
+const SQL_LANGUAGE_IDS = new Set(['oracle-fusion-sql']);
+const SQL_FILE_NAME_REGEX = /\.fusion\.sql$/iu;
 
 function getSqlFormatterConfig(): SqlFormatterConfig {
 	const config = vscode.workspace.getConfiguration('oracleFusionBIPVSCodeExtension.sqlFormatter');
@@ -51,12 +51,7 @@ function createDefaultExportUri(extension: 'csv' | 'xlsx'): vscode.Uri {
 }
 
 function isSqlDocument(document: vscode.TextDocument): boolean {
-	const languageId = document.languageId.toLowerCase();
-	if (SQL_LANGUAGE_IDS.has(languageId) || languageId.includes('sql')) {
-		return true;
-	}
-
-	return SQL_FILE_NAME_REGEX.test(document.fileName);
+	return document.languageId === 'oracle-fusion-sql';
 }
 
 function resolveSqlFormatterLanguage(document: vscode.TextDocument): 'sql' | 'plsql' {
@@ -102,10 +97,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.languages.registerCompletionItemProvider(
 			[
-				{ language: 'sql', scheme: 'file' },
-				{ language: 'plsql', scheme: 'file' },
-				{ language: 'sql', scheme: 'untitled' },
-				{ language: 'plsql', scheme: 'untitled' }
+				{ language: 'oracle-fusion-sql', scheme: 'file' },
+				{ language: 'oracle-fusion-sql', scheme: 'untitled' }
 			],
 			sqlCompletionProvider,
 			'.', ' '
@@ -115,10 +108,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.languages.registerHoverProvider(
 			[
-				{ language: 'sql', scheme: 'file' },
-				{ language: 'plsql', scheme: 'file' },
-				{ language: 'sql', scheme: 'untitled' },
-				{ language: 'plsql', scheme: 'untitled' }
+				{ language: 'oracle-fusion-sql', scheme: 'file' },
+				{ language: 'oracle-fusion-sql', scheme: 'untitled' }
 			],
 			sqlCompletionProvider
 		)

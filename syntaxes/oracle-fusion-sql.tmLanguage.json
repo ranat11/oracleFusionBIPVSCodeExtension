@@ -1,0 +1,137 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Oracle Fusion SQL",
+	"scopeName": "source.oracle-fusion-sql",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#bind-variables"
+		},
+		{
+			"include": "#control-keywords"
+		},
+		{
+			"include": "#logical-operators"
+		},
+		{
+			"include": "#functions"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#numbers"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-dash.sql",
+					"match": "--.*$"
+				},
+				{
+					"name": "comment.block.sql",
+					"begin": "/\\*",
+					"end": "\\*/"
+				}
+			]
+		},
+		"strings": {
+			"patterns": [
+				{
+					"name": "string.quoted.single.sql",
+					"begin": "'",
+					"end": "'",
+					"patterns": [
+						{
+							"name": "constant.character.escape.sql",
+							"match": "''"
+						}
+					]
+				},
+				{
+					"name": "string.quoted.double.sql",
+					"begin": "\"",
+					"end": "\""
+				}
+			]
+		},
+		"bind-variables": {
+			"patterns": [
+				{
+					"name": "variable.parameter.sql",
+					"match": ":[a-zA-Z0-9_$#]+"
+				}
+			]
+		},
+		"control-keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.sql",
+					"match": "(?i)\\b(SELECT|FROM|WHERE|GROUP\\s+BY|ORDER\\s+BY|ORDER\\s+SIBLINGS\\s+BY|HAVING|INSERT\\s+INTO|UPDATE|DELETE|WITH|AS|START\\s+WITH|CONNECT\\s+BY|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|CROSS|NATURAL|UNION|ALL|EXCEPT|INTERSECT|MINUS|CASE|WHEN|THEN|ELSE|END|LIMIT|OFFSET|FETCH|FIRST|NEXT|ROWS|ONLY|PARTITION\\s+BY|OVER)\\b"
+				}
+			]
+		},
+		"logical-operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator.logical.sql",
+					"match": "(?i)\\b(AND|OR|NOT|IN|LIKE|IS|BETWEEN|EXISTS|ANY|ALL|SOME)\\b"
+				}
+			]
+		},
+		"functions": {
+			"patterns": [
+				{
+					"name": "support.function.sql",
+					"match": "(?i)\\b(TO_CHAR|TO_DATE|TO_NUMBER|NVL|NVL2|COALESCE|DECODE|TRUNC|ROUND|ABS|MOD|UPPER|LOWER|INITCAP|SUBSTR|INSTR|LENGTH|REPLACE|TRANSLATE|LTRIM|RTRIM|TRIM|LPAD|RPAD|CONCAT|LISTAGG|WM_CONCAT|XMLAGG|XMLELEMENT|XMLFOREST|XMLSERIALIZE|JSON_OBJECT|JSON_ARRAY|JSON_VALUE|JSON_QUERY|JSON_TABLE|RANK|DENSE_RANK|ROW_NUMBER|LAG|LEAD|SUM|AVG|COUNT|MIN|MAX|STDDEV|VARIANCE|EXTRACT|CAST|COALESCE|GREATEST|LEAST|USER)\\b"
+				}
+			]
+		},
+		"constants": {
+			"patterns": [
+				{
+					"name": "constant.language.sql",
+					"match": "(?i)\\b(NULL|SYSDATE|DUAL|TRUE|FALSE)\\b"
+				},
+				{
+					"name": "variable.language.sql",
+					"match": "(?i)\\b(PRIOR|LEVEL|ROWID|ROWNUM|NEXTVAL|CURRVAL)\\b"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator.comparison.sql",
+					"match": "==|!=|<>|>=|<=|>|<|="
+				},
+				{
+					"name": "keyword.operator.arithmetic.sql",
+					"match": "\\+|\\-|\\*|/|%"
+				},
+				{
+					"name": "keyword.operator.concatenation.sql",
+					"match": "\\|\\|"
+				}
+			]
+		},
+		"numbers": {
+			"patterns": [
+				{
+					"name": "constant.numeric.sql",
+					"match": "\\b\\d+(\\.\\d+)?\\b"
+				}
+			]
+		}
+	}
+}

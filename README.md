@@ -45,6 +45,19 @@ Run Oracle Fusion BI Publisher SQL directly from VS Code with a workflow built f
 
 ---
 
+
+## SQL Autocompletion
+
+- **Context-Aware Suggestions:** Get intelligent autocompletion for SQL and PLSQL files, including:
+	- Table names, aliases, and columns based on your schema.
+	- Column suggestions after table aliases (e.g., `alias.`).
+	- Table and alias suggestions after `FROM`, `JOIN`, and similar clauses.
+	- Join condition snippets after `ON`, based on foreign key relationships.
+	- Column suggestions in `SELECT`, `WHERE`, `ON`, `HAVING`, and other contexts.
+- **Hover Info:** Hover over table or column names to see descriptions, data types, and key information from the schema.
+- **Usage-Based Ranking:** Frequently used tables and columns are ranked higher in suggestions.
+- **Schema Awareness:** Autocompletion is powered by built-in schema files for Fusion modules (common, financials, procurement).
+
 ## SQL Formatter
 
 - **Automatic Formatting:** SQL and PLSQL documents are automatically formatted on save (configurable).
